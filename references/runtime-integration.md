@@ -46,8 +46,8 @@ Recommended payload extras:
 
 ## 4) Target matching
 Normalize IDs before comparison so these resolve equivalently when intended:
-- `745400293`
-- `telegram:745400293`
+- `<OWNER_CHAT_ID>`
+- `telegram:<OWNER_CHAT_ID>`
 
 ## 5) Audit decisions
 Write one-line decisions:

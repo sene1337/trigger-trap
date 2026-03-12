@@ -33,7 +33,7 @@ function resolveAskGateCorePath() {
 const askGateCorePath = resolveAskGateCorePath();
 const { DEFAULT_ASK_GATE_CONFIG, evaluateAskGate } = await import(pathToFileURL(askGateCorePath).href);
 
-const BRAD_CHAT_ID = "745400293";
+const OWNER_CHAT_ID = process.env.OWNER_CHAT_ID ?? "100000000";
 
 function writeJson(filePath, value) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -65,7 +65,7 @@ function runCase(rootDir, definition) {
 
   const config = {
     ...DEFAULT_ASK_GATE_CONFIG,
-    ownerChatId: BRAD_CHAT_ID,
+    ownerChatId: OWNER_CHAT_ID,
     mode: definition.mode ?? "rewrite",
     dryRun: definition.dryRun ?? false,
     tokenTtlSeconds: 600,
@@ -75,7 +75,7 @@ function runCase(rootDir, definition) {
 
   const result = evaluateAskGate({
     event: {
-      to: definition.to ?? BRAD_CHAT_ID,
+      to: definition.to ?? OWNER_CHAT_ID,
       content: definition.message,
       metadata: {
         channel: "telegram"
@@ -83,7 +83,7 @@ function runCase(rootDir, definition) {
     },
     ctx: {
       channelId: definition.channelId ?? "telegram",
-      conversationId: definition.to ?? BRAD_CHAT_ID
+      conversationId: definition.to ?? OWNER_CHAT_ID
     },
     config,
     nowEpoch

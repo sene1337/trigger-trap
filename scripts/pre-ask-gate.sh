@@ -20,7 +20,7 @@
 set -euo pipefail
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-WORKSPACE="${WORKSPACE:-/Users/senemaro/.openclaw/workspace}"
+WORKSPACE="${WORKSPACE:-$(cd "$(dirname "$0")/.." && pwd)}"
 GATE_DIR="${WORKSPACE}/.gate"
 GATE_FILE="${GATE_DIR}/ask-allowed.json"
 LOG_FILE="${WORKSPACE}/logs/ask-guard.log"
