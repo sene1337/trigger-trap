@@ -31,7 +31,9 @@ function resolveAskGateCorePath() {
 }
 
 const askGateCorePath = resolveAskGateCorePath();
-const { DEFAULT_ASK_GATE_CONFIG, evaluateAskGate } = await import(pathToFileURL(askGateCorePath).href);
+const { DEFAULT_ASK_GATE_CONFIG, createAskGateSourceTracker, evaluateAskGate } = await import(
+  pathToFileURL(askGateCorePath).href
+);
 
 const OWNER_CHAT_ID = process.env.OWNER_CHAT_ID ?? "100000000";
 
@@ -52,10 +54,36 @@ function buildToken(nowEpoch, expiresOffsetSeconds) {
   };
 }
 
+function buildSubagentHistory(message) {
+  return [
+    {
+      role: "assistant",
+      content: [{ type: "text", text: "Previous reply." }]
+    },
+    {
+      role: "user",
+      content: [{ type: "text", text: "Subagent completion ready." }],
+      provenance: {
+        kind: "inter_session",
+        sourceSessionKey: "subagent:test",
+        sourceChannel: "webchat",
+        sourceTool: "subagent_announce"
+      }
+    },
+    {
+      role: "assistant",
+      content: [{ type: "text", text: message }]
+    }
+  ];
+}
+
 function runCase(rootDir, definition) {
   const gateFilePath = path.join(rootDir, definition.id, "ask-allowed.json");
   const auditLogPath = path.join(rootDir, definition.id, "ask-guard.log");
   const nowEpoch = 1_762_987_200;
+  const nowMs = nowEpoch * 1000;
+  const sourceTracker = createAskGateSourceTracker();
+  const sessionKey = definition.sessionKey ?? `session:${definition.id}`;
 
   if (definition.token === "valid") {
     writeJson(gateFilePath, buildToken(nowEpoch, 600));
@@ -73,12 +101,30 @@ function runCase(rootDir, definition) {
     auditLogPath
   };
 
+  if (definition.runSource) {
+    sourceTracker.noteRun({
+      sessionKey,
+      trigger: definition.runSource.trigger,
+      historyMessages: definition.runSource.historyMessages ?? [],
+      nowMs
+    });
+    sourceTracker.noteAssistantMessage({
+      sessionKey,
+      nowMs,
+      message: {
+        role: "assistant",
+        content: [{ type: "text", text: definition.message }]
+      }
+    });
+  }
+
   const result = evaluateAskGate({
     event: {
       to: definition.to ?? OWNER_CHAT_ID,
       content: definition.message,
       metadata: {
-        channel: "telegram"
+        channel: "telegram",
+        ...(definition.metadata ?? {})
       }
     },
     ctx: {
@@ -86,7 +132,12 @@ function runCase(rootDir, definition) {
       conversationId: definition.to ?? OWNER_CHAT_ID
     },
     config,
-    nowEpoch
+    nowEpoch,
+    sourceBypass: sourceTracker.consumeBypass({
+      content: definition.message,
+      metadata: definition.metadata,
+      nowMs
+    })
   });
 
   return {
@@ -94,7 +145,9 @@ function runCase(rootDir, definition) {
     expected: definition.expected,
     actual: result.action,
     dryRun: Boolean(result.dryRun),
-    reason: result.reason
+    reason: result.reason,
+    sourceBypass: result.sourceBypass ?? null,
+    rewriteMessage: result.content ?? null
   };
 }
 
@@ -103,6 +156,31 @@ const definitions = [
     id: "blocked-question-no-token",
     message: "How should I handle the Kazuo position?",
     expected: "rewrite"
+  },
+  {
+    id: "allowed-cron-source-bypass",
+    message: "How should I handle the Kazuo position?",
+    runSource: {
+      trigger: "cron"
+    },
+    expected: "pass"
+  },
+  {
+    id: "allowed-heartbeat-source-bypass",
+    message: "How should I handle the Kazuo position?",
+    runSource: {
+      trigger: "heartbeat"
+    },
+    expected: "pass"
+  },
+  {
+    id: "allowed-subagent-completion-source-bypass",
+    message: "How should I handle the Kazuo position?",
+    runSource: {
+      trigger: "user",
+      historyMessages: buildSubagentHistory("How should I handle the Kazuo position?")
+    },
+    expected: "pass"
   },
   {
     id: "allowed-question-valid-token",

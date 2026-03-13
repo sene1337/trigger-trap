@@ -15,10 +15,15 @@ Recommended safety defaults:
 
 The runtime handler should:
 1. Normalize config.
-2. Classify outbound content (question, veiled ask, bypass, non-question).
-3. Check short-TTL gate token (`ask-allowed.json`).
-4. Return `rewrite`/`cancel` or pass.
-5. Append audit line to `logs/ask-guard.log`.
+2. Pre-classify proven source bypasses:
+   - `llm_input` with `ctx.trigger="cron"` -> `cron-origin`
+   - `llm_input` with `ctx.trigger="heartbeat"` -> `heartbeat-origin`
+   - `llm_input` with latest inter-session user provenance `sourceTool="subagent_announce"` -> `subagent-completion-origin`
+   - bridge that source to the final outbound text via `before_message_write`
+3. Classify outbound content (question, veiled ask, bypass, non-question).
+4. Check short-TTL gate token (`ask-allowed.json`).
+5. Return `rewrite`/`cancel` or pass.
+6. Append audit line to `logs/ask-guard.log`.
 
 ## 2) Required config fields
 - `enabled` (bool)
@@ -57,6 +62,8 @@ Write one-line decisions:
 - `DRY_RUN_BLOCK`
 - `BLOCK_REWRITE`
 - `BLOCK_CANCEL`
+
+When the bypass is source-based, include the source label (`cron-origin`, `heartbeat-origin`, `subagent-completion-origin`) in the audit line.
 
 ## 6) Expand undesired-behavior coverage
 Extend behavior controls without redesigning the gate by updating:
