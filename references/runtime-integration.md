@@ -20,6 +20,8 @@ The runtime handler should:
    - `llm_input` with `ctx.trigger="heartbeat"` -> `heartbeat-origin`
    - `llm_input` with latest inter-session user provenance `sourceTool="subagent_announce"` -> `subagent-completion-origin`
    - bridge that source to the final outbound text via `before_message_write`
+   - **TTL must be long enough for multi-step agent runs** (recommended ≥15 min / 900s). Cron-triggered jobs do real work (file scanning, report generation) that can take several minutes. A short TTL (e.g. 60s) causes the bypass to expire before the outbound message is sent.
+   - **Preserve existing bypass entries across subsequent LLM calls.** When a follow-up `llm_input` fires without a trigger tag (e.g. during tool-use loops), do NOT delete the existing source bypass entry. Only overwrite when a new valid trigger is detected.
 3. Classify outbound content (question, veiled ask, bypass, non-question).
 4. Check short-TTL gate token (`ask-allowed.json`).
 5. Return `rewrite`/`cancel` or pass.
