@@ -13,6 +13,7 @@ function resolveAskGateCorePath() {
   const candidates = [
     envPath,
     path.resolve(process.cwd(), ".openclaw/extensions/ask-gate-runtime/src/ask-gate-core.mjs"),
+    path.resolve(__dirname, "../.openclaw/extensions/ask-gate-runtime/src/ask-gate-core.mjs"),
     path.resolve(__dirname, "../../../.openclaw/extensions/ask-gate-runtime/src/ask-gate-core.mjs"),
     path.resolve(__dirname, "../../.openclaw/extensions/ask-gate-runtime/src/ask-gate-core.mjs")
   ].filter(Boolean);
@@ -31,9 +32,11 @@ function resolveAskGateCorePath() {
 }
 
 const askGateCorePath = resolveAskGateCorePath();
-const { DEFAULT_ASK_GATE_CONFIG, createAskGateSourceTracker, evaluateAskGate } = await import(
-  pathToFileURL(askGateCorePath).href
-);
+const {
+  DEFAULT_ASK_GATE_CONFIG,
+  createAskGateSourceTracker,
+  evaluateAskGate
+} = await import(pathToFileURL(askGateCorePath).href);
 
 const OWNER_CHAT_ID = process.env.OWNER_CHAT_ID ?? "100000000";
 
@@ -94,7 +97,7 @@ function runCase(rootDir, definition) {
   const config = {
     ...DEFAULT_ASK_GATE_CONFIG,
     ownerChatId: OWNER_CHAT_ID,
-    mode: definition.mode ?? "rewrite",
+    mode: definition.mode ?? "cancel",
     dryRun: definition.dryRun ?? false,
     tokenTtlSeconds: 600,
     gateFilePath,
@@ -146,8 +149,7 @@ function runCase(rootDir, definition) {
     actual: result.action,
     dryRun: Boolean(result.dryRun),
     reason: result.reason,
-    sourceBypass: result.sourceBypass ?? null,
-    rewriteMessage: result.content ?? null
+    sourceBypass: result.sourceBypass ?? null
   };
 }
 
@@ -155,7 +157,7 @@ const definitions = [
   {
     id: "blocked-question-no-token",
     message: "How should I handle the Kazuo position?",
-    expected: "rewrite"
+    expected: "cancel"
   },
   {
     id: "allowed-cron-source-bypass",
@@ -197,7 +199,7 @@ const definitions = [
     id: "blocked-expired-token",
     message: "What is the current target?",
     token: "expired",
-    expected: "rewrite"
+    expected: "cancel"
   },
   {
     id: "allowed-non-brad-target",
@@ -218,7 +220,7 @@ const definitions = [
   {
     id: "blocked-veiled-ask",
     message: "I can send the full breakdown if you want.",
-    expected: "rewrite"
+    expected: "cancel"
   },
   {
     id: "dry-run-veiled-ask",

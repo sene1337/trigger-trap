@@ -32,7 +32,7 @@ Treat Trigger Trap as a runtime hard gate for behavior drift that can persist ev
 
 ## Guardrails
 - Scope the gate to the target channel/recipient you intend to protect (explicit Telegram channel + explicit operator chat ID).
-- Default to `rewrite` in production for continuity; use `cancel` only when strict drop is required.
+- Default to `cancel` in production to prevent user-facing block spam; pair with next-turn 1-3-1 remediation injection.
 - Use `dryRun=true` for safe rollout tuning, then switch to `dryRun=false` for enforcement.
 - Use fail-open behavior on hook errors (fallback passthrough) so delivery is never silently broken by gate bugs.
 - Never treat script existence as proof; require runtime evidence + logs.

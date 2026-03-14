@@ -6,17 +6,17 @@ node scripts/ask-gate-runtime-proof.mjs
 ```
 
 Expected minimum matrix:
-1. blocked-question-no-token -> rewrite
+1. blocked-question-no-token -> cancel
 2. allowed-cron-source-bypass -> pass
 3. allowed-heartbeat-source-bypass -> pass
 4. allowed-subagent-completion-source-bypass -> pass
 5. allowed-question-valid-token -> pass
 6. allowed-non-question-no-token -> pass
-7. blocked-expired-token -> rewrite
-8. allowed-non-target -> pass
+7. blocked-expired-token -> cancel
+8. allowed-non-brad-target -> pass
 9. allowed-heartbeat-status -> pass
 10. allowed-explicit-131 -> pass
-11. blocked-veiled-ask -> rewrite
+11. blocked-veiled-ask -> cancel
 12. dry-run-veiled-ask -> pass (dry-run)
 
 ## Live smoke checklist
